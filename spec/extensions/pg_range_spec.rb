@@ -275,6 +275,7 @@ describe "pg_range extension" do
       @r1 = @R.new(1, 2)
       @r2 = @R.new(3, nil, :exclude_begin=>true, :db_type=>'int4range')
       @r3 = @R.new(nil, 4, :exclude_end=>true, :db_type=>'int8range')
+      @r4 = @R.new(DateTime.new(2016, 4, 3, 12, 15, 30, '-6'), Sequel.cast('infinity', DateTime), :db_type=>'tstzrange')
     end
 
     it "should have #begin return the beginning of the range" do
@@ -337,6 +338,12 @@ describe "pg_range extension" do
       a = []
       @r1.step{|x| a << x}
       a.must_equal [1, 2]
+    end
+
+    it "should quack like a range even when a native ruby range can't be validly created" do
+      if RUBY_VERSION >= '1.9'
+        @r4.cover?(Time.local(2016, 4, 3, 13, 0, 45))
+      end
     end
 
     it "should only consider PGRanges equal if they have the same db_type" do
@@ -440,6 +447,7 @@ describe "pg_range extension" do
       @R.new(1, nil).valid_ruby_range?.must_equal false
       @R.new(0, 1, :exclude_begin=>true).valid_ruby_range?.must_equal false
       @R.empty.valid_ruby_range?.must_equal false
+      @r4.valid_ruby_range?.must_equal false
     end
   end
 end
